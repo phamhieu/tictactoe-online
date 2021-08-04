@@ -1,7 +1,11 @@
 import '../styles/globals.css'
+import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { Toaster } from 'react-hot-toast'
 import type { AppProps } from 'next/app'
+import { Toaster } from 'react-hot-toast'
+import Store, { StoreContext } from '../lib/store'
+import { supabase } from '../lib/supabaseClient'
+import { AuthSession } from '@supabase/supabase-js'
 
 const PortalRootWithNoSSR = dynamic(
   (() => import('@radix-ui/react-portal').then((portal) => portal.Root)) as any,
@@ -9,11 +13,21 @@ const PortalRootWithNoSSR = dynamic(
 )
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const store = new Store()
+
+  useEffect(() => {
+    store.setSession(supabase.auth.session())
+
+    supabase.auth.onAuthStateChange((_event: string, session: AuthSession | null) => {
+      store.setSession(session)
+    })
+  }, [])
+
   return (
-    <>
+    <StoreContext.Provider value={store}>
       <Component {...pageProps} />
       <PortalToast />
-    </>
+    </StoreContext.Provider>
   )
 }
 export default MyApp
