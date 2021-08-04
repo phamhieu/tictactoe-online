@@ -1,9 +1,12 @@
 import { AuthSession, User } from '@supabase/supabase-js'
 import * as React from 'react'
+import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabaseClient'
+import Loading from '../components/Loading'
 
 const ProfileHeading: React.FC = () => {
   const [user, setUser] = React.useState<User | null>(null)
+  const [loading, setLoading] = React.useState(false)
 
   React.useEffect(() => {
     setUser(supabase.auth.user())
@@ -12,6 +15,18 @@ const ProfileHeading: React.FC = () => {
       setUser(session?.user ?? null)
     })
   }, [])
+
+  const handleLogout = async (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault()
+    try {
+      setLoading(true)
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+    } catch (error) {
+      toast.error(error.message)
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="md:flex md:items-center md:justify-between md:space-x-5">
@@ -35,7 +50,9 @@ const ProfileHeading: React.FC = () => {
         <button
           type="button"
           className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500"
+          onClick={handleLogout}
         >
+          {loading && <Loading />}
           Logout
         </button>
       </div>
