@@ -1,71 +1,68 @@
 import * as React from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabaseClient'
-import Loading from '../components/Loading'
+import Auth from '../components/Auth'
 import Layout from '../components/Layout'
+import ProfileHeading from '../components/ProfileHeading'
+import { AuthSession } from '@supabase/supabase-js'
 
 export default function Home() {
-  return (
-    <Layout>
-      <div className="flex-shrink-0 flex justify-center">
-        <h1 className="mt-2 text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
-          Tic Tac Toe online
-        </h1>
-      </div>
-      <div className="mx-auto py-24">
-        <div className="text-center">
-          <p className="mt-2 text-base text-gray-500">
-            Sign in with magic link to start playing with others
-          </p>
-          <MagicLinkForm />
-        </div>
-      </div>
-    </Layout>
-  )
+  const [session, setSession] = React.useState<AuthSession | null>(null)
+
+  React.useEffect(() => {
+    setSession(supabase.auth.session())
+
+    supabase.auth.onAuthStateChange((_event: string, session: AuthSession | null) => {
+      setSession(session)
+    })
+  }, [])
+
+  return <Layout>{session ? <WaitingRoom /> : <Auth />}</Layout>
 }
 
-const MagicLinkForm: React.FC = () => {
-  const [loading, setLoading] = React.useState(false)
-  const [email, setEmail] = React.useState('')
-
-  const handleLogin = async (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault()
-    try {
-      setLoading(true)
-      const { error } = await supabase.auth.signIn({ email })
-      if (error) throw error
-      toast.success('Check your email for the login link!')
-    } catch (error) {
-      toast.error(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
+const WaitingRoom: React.FC = () => {
   return (
-    <form action="#" className="mt-6 flex flex-col">
-      <div className="w-full">
-        <label htmlFor="email" className="sr-only">
-          Email address
-        </label>
-        <input
-          type="text"
-          name="email"
-          id="email"
-          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-          placeholder="Enter an email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+    <div className="">
+      <ProfileHeading />
+      <div className="max-w-3xl mx-auto px-4 py-12 sm:px-6 lg:max-w-7xl lg:px-8">
+        <h1 className="sr-only">Game Room</h1>
+        {/* Main 3 column grid */}
+        <div className="grid grid-cols-1 gap-4 items-start lg:grid-cols-3 lg:gap-8">
+          {/* Left column */}
+          <div className="grid grid-cols-1 gap-4">
+            <section aria-labelledby="section-1-title">
+              <h2 className="sr-only" id="section-1-title">
+                Online players
+              </h2>
+              <div className="rounded-lg bg-white overflow-hidden shadow">
+                <div className="p-6">
+                  <div
+                    style={{ height: '30rem', background: 'blue' }}
+                    className="border-2 border-dashed border-gray-300 rounded-lg"
+                  ></div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* Right column */}
+          <div className="grid grid-cols-1 gap-4 lg:col-span-2">
+            <section aria-labelledby="section-2-title">
+              <h2 className="sr-only" id="section-2-title">
+                Game status
+              </h2>
+              <div className="rounded-lg bg-white overflow-hidden shadow">
+                <div className="p-6">
+                  <div
+                    style={{ height: '30rem', background: 'red' }}
+                    className="border-2 border-dashed border-gray-300 rounded-lg"
+                  ></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
       </div>
-      <button
-        type="submit"
-        className="mt-4 inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        onClick={handleLogin}
-      >
-        {loading && <Loading />}
-        Send magic link
-      </button>
-    </form>
+    </div>
   )
 }
