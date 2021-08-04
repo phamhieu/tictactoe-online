@@ -35,8 +35,8 @@ const ProfileHeading: React.FC = () => {
           <div className="relative">
             <img
               className="h-16 w-16 rounded-full"
-              src="https://images.unsplash.com/photo-1463453091185-61582044d556?ixlib=rb-=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=8&w=1024&h=1024&q=80"
-              alt=""
+              src="https://via.placeholder.com/200?text=avatar"
+              alt="profile avatar"
             />
             <span className="absolute inset-0 shadow-inner rounded-full" aria-hidden="true" />
           </div>
