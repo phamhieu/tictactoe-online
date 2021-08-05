@@ -3,10 +3,11 @@
 ## Todos
 
 - [x] Implement Presence system
-- [ ] Allow to invite other to a 1 vs 1
+- [ ] Allow to invite other to a 1vs1
 - [ ] Build game rules
-  - [ ] Everyone has 10 seconds to think in a game. Player wil idle time more than 10 seconds will lose the game. Player with longer idle time will lose a draw march
   - [x] Classic tictactoe rule
+  - [ ] Everyone has 10 seconds to think in a game. Player with idle time more than 10 seconds will lose the game.
+  - [ ] Player with longer idle time will lose a draw game
 - [ ] Game report
   - [ ] ...
 
