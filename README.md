@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# `TicTacToe Online`
 
 ## Getting Started
 
@@ -12,23 +12,106 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Schema
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.tsx`.
+```sql
+-- Create a table for Public Profiles
+create table profiles (
+  id uuid references auth.users not null,
+  avatar_url text,
+  username text unique,
+  updated_at timestamp with time zone default timezone('utc'::text, now()),
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+  primary key (id),
+  unique(username),
+  constraint username_length check (char_length(username) >= 3)
+);
 
-## Learn More
+alter table profiles enable row level security;
 
-To learn more about Next.js, take a look at the following resources:
+create policy "Public profiles are viewable by everyone."
+  on profiles for select
+  using ( true );
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+create policy "Users can insert their own profile."
+  on profiles for insert
+  with check ( auth.uid() = id );
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+create policy "Users can update own profile."
+  on profiles for update
+  using ( auth.uid() = id );
 
-## Deploy on Vercel
+-- Create a table for Public Profiles
+create table if not exists presence (
+  id uuid references public.profiles not null,
+  status        bool default false not null,
+  updated_at    timestamp with time zone default timezone('utc'::text, now()),
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+  primary key (id)
+);
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+alter table presence enable row level security;
+
+create policy "Presence are viewable by everyone."
+  on presence for select
+  using ( true );
+
+create policy "Users can insert their own presence."
+  on presence for insert
+  with check ( auth.uid() = id );
+
+create policy "Users can update own presence."
+  on presence for update
+  using ( auth.uid() = id );
+
+-- clean up
+drop trigger if exists on_auth_user_created on auth.users;
+drop function if exists public.handle_new_user;
+
+-- inserts a row into public.presence
+create function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, username)
+  values (new.id, new.email);
+  insert into public.presence (id, status)
+  values (new.id, true);
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- trigger handle_new_user function every time a user is created
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- clean up
+drop trigger if exists on_presence_updated on public.presence;
+drop function if exists public.verify_presence;
+
+-- update presence status when updated_at greater than a duration
+create function public.verify_presence()
+returns trigger as $$
+begin
+  update public.presence
+  set status = false
+  where now() - updated_at > interval '10 second';
+  return null;
+end;
+$$ language plpgsql security definer;
+
+-- trigger verify_presence function every time a presence is updated
+-- pg_trigger_depth: https://stackoverflow.com/a/14262289
+create trigger on_presence_updated
+  after update on public.presence
+  for each row when (pg_trigger_depth() = 0)
+  execute procedure public.verify_presence();
+```
+
+## License
+
+This repo is licenced under MIT.
+
+## Credits
+
+- https://github.com/khrj/tic-tac-toe: the game UI
