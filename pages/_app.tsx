@@ -18,9 +18,15 @@ function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     store.setSession(supabase.auth.session())
 
-    supabase.auth.onAuthStateChange((_event: string, session: AuthSession | null) => {
-      store.setSession(session)
-    })
+    const subscription = supabase.auth.onAuthStateChange(
+      (_event: string, session: AuthSession | null) => {
+        store.setSession(session)
+      }
+    )
+
+    return () => {
+      subscription?.data?.unsubscribe()
+    }
   }, [])
 
   return (

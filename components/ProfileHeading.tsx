@@ -5,14 +5,24 @@ import Loading from '../components/Loading'
 import { StoreContext } from '../lib/store'
 import { observer } from 'mobx-react-lite'
 
-const ProfileHeading: React.FC = () => {
+const ProfileHeading: React.FC = observer(() => {
+  const _store = React.useContext(StoreContext)
+
+  React.useEffect(() => {
+    // _store.updatePresenceAsync()
+    // const intervalId = setInterval(() => {
+    //   _store.updatePresenceAsync()
+    // }, 10000)
+    // return () => clearInterval(intervalId)
+  }, [])
+
   return (
     <div className="md:flex md:items-center md:justify-between md:space-x-5">
       <Profile />
       <LogoutButton />
     </div>
   )
-}
+})
 
 export default ProfileHeading
 
