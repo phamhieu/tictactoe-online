@@ -68,9 +68,21 @@ const OnlinePlayers: React.FC = observer(() => {
     _store.getProfilesAsync()
 
     const mySubscription = supabase
-      .from('profiles')
+      .from('presence_status')
       .on('INSERT', (payload) => {
         console.log('New INSERT received!', payload)
+        const id = payload?.new?.id
+        if (id) {
+          _store.getProfileAsync(id)
+        }
+      })
+      .on('UPDATE', (payload) => {
+        console.log('New UPDATE received!', payload)
+        const id = payload?.new?.id
+        const status = payload?.new?.status
+        if (id) {
+          _store.updatePresenceStatus(id, status)
+        }
       })
       .subscribe()
     return () => {
@@ -109,6 +121,13 @@ const PlayerList: React.FC = observer(() => {
 
   return (
     <ul className="-my-5 divide-y divide-gray-200">
+      {_store.sortedProfiles.length == 0 && (
+        <li className="py-4">
+          <div className="flex items-center space-x-4">
+            <p className="mt-1 text-sm text-gray-500">Please wait for others to join.</p>
+          </div>
+        </li>
+      )}
       {_store.sortedProfiles.map(({ id, avatar_url, username, status }) => (
         <PlayerListItem key={id} avatarUrl={avatar_url} online={status} username={username} />
       ))}

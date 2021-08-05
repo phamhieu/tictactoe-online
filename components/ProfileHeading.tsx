@@ -9,11 +9,11 @@ const ProfileHeading: React.FC = observer(() => {
   const _store = React.useContext(StoreContext)
 
   React.useEffect(() => {
-    // _store.updatePresenceAsync()
-    // const intervalId = setInterval(() => {
-    //   _store.updatePresenceAsync()
-    // }, 10000)
-    // return () => clearInterval(intervalId)
+    _store.updatePresenceAsync()
+    const intervalId = setInterval(() => {
+      _store.updatePresenceAsync()
+    }, 9000)
+    return () => clearInterval(intervalId)
   }, [])
 
   return (

@@ -15,8 +15,10 @@ interface IStore {
   session: AuthSession | null
   sortedProfiles: Dictionary<any>[]
   user: User | null
+  getProfileAsync: (id: string) => void
   getProfilesAsync: () => void
   updatePresenceAsync: () => void
+  updatePresenceStatus: (id: string, status: boolean) => void
 }
 
 class Store implements IStore {
@@ -38,35 +40,62 @@ class Store implements IStore {
     return this.profiles.filter((x) => x.status).length
   }
 
-  getProfilesAsync = async () => {
+  async getProfilesAsync() {
     try {
       const { error, data } = await supabase
         .from('profiles')
-        .select('id, avatar_url, username, presence(status)')
+        .select('id, avatar_url, username, presence_status(status)')
       if (error) throw error
-      const _temp =
+      const temp =
         data?.map((x) => {
-          return { ...x, status: x.presence[0].status }
+          return { ...x, status: x.presence_status[0].status }
         }) ?? []
       runInAction(() => {
-        this.profiles = _temp
+        this.profiles = temp.filter((x) => x.id != this.user?.id)
       })
-      console.log('**** getProfilesAsync: ', _temp)
+      console.log('**** getProfilesAsync: ', temp)
     } catch (error) {
       console.log('getProfilesAsync: ', error)
     }
   }
 
-  updatePresenceAsync = async () => {
+  async getProfileAsync(id: string) {
+    try {
+      const { error, data } = await supabase
+        .from('profiles')
+        .select('id, avatar_url, username, presence_status(status)')
+        .eq('id', id)
+        .maybeSingle()
+      if (error) throw error
+      if (data) {
+        const temp = { ...data, status: data.presence_status[0].status }
+        runInAction(() => {
+          this.profiles.push(temp)
+        })
+        console.log('**** getProfileAsync: ', temp)
+      }
+    } catch (error) {
+      console.log('getProfileAsync: ', error)
+    }
+  }
+
+  async updatePresenceAsync() {
     console.log('**** updatePresenceAsync')
     try {
       const { error } = await supabase
         .from('presence')
-        .update({ status: true, updated_at: UtcTime() }, { returning: 'minimal' })
+        .update({ updated_at: UtcTime() }, { returning: 'minimal' })
         .match({ id: this.user?.id })
       if (error) throw error
     } catch (error) {
       console.log('updatePresenceAsync: ', error)
+    }
+  }
+
+  updatePresenceStatus = (id: string, status: boolean) => {
+    const found = this.profiles.find((x) => x.id == id)
+    if (found) {
+      found.status = status
     }
   }
 
