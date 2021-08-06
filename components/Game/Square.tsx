@@ -1,4 +1,4 @@
-import { value } from '../lib/types'
+import { value } from '../../lib/types'
 
 export default function Square(props: { onClick: any; value: value }) {
   const x: JSX.Element = (

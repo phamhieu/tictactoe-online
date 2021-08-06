@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { observer } from 'mobx-react-lite'
-import Layout from '../../components/Layout'
-import Board from '../../components/Board'
-import ProfileHeading from '../../components/ProfileHeading'
+import Layout from '../../components/Layout/Layout'
+import Board from '../../components/Game/Board'
+import ProfileHeading from '../../components/Layout/ProfileHeading'
 
 export default function GameBoard() {
   return (

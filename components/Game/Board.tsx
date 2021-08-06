@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useState } from 'react'
 import Square from './Square'
-import { value } from '../lib/types'
+import { value } from '../../lib/types'
 
 export default function Board() {
   let [squares, setSquares]: [squares: value[], setSquares: Dispatch<SetStateAction<any[]>>] =

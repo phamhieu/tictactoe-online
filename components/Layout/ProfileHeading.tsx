@@ -1,9 +1,9 @@
 import * as React from 'react'
 import toast from 'react-hot-toast'
-import { supabase } from '../lib/supabaseClient'
-import { StoreContext } from '../lib/store'
+import { supabase } from '../../lib/supabaseClient'
+import { StoreContext } from '../../lib/store'
 import { observer } from 'mobx-react-lite'
-import Loading from '../components/Loading'
+import Loading from '../Loading'
 
 const ProfileHeading: React.FC = observer(() => {
   const _store = React.useContext(StoreContext)

@@ -1,5 +1,4 @@
 import * as React from 'react'
-import toast from 'react-hot-toast'
 import { observer } from 'mobx-react-lite'
 import { StoreContext } from '../lib/store'
 import { supabase } from '../lib/supabaseClient'
