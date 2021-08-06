@@ -1,7 +1,8 @@
 import { makeAutoObservable, runInAction } from 'mobx'
+import { UtcTime } from './helper'
 import { Dictionary, IStore } from './store'
 import { supabase } from './supabaseClient'
-import { gameMoveValue } from './types'
+import { gameMoveValue, gameStatus } from './types'
 
 export interface IGameStore {
   game: Dictionary<any> | null
@@ -101,6 +102,14 @@ class GameStore implements IGameStore {
         })
       }
       console.log('**** createGameMoveAsync: ', data)
+
+      if (this.isEnded) {
+        // Complete the game
+        await supabase
+          .from('games')
+          .update({ status: gameStatus.COMPLETE, completed_at: UtcTime() })
+          .match({ id: this.game?.id })
+      }
     } catch (error) {
       console.log('createGameMoveAsync: ', error)
     }

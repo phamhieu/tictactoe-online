@@ -1,6 +1,7 @@
 import { AuthSession, User } from '@supabase/supabase-js'
 import { makeAutoObservable, runInAction } from 'mobx'
 import { createContext } from 'react'
+import { UtcTime } from './helper'
 import { supabase } from './supabaseClient'
 import { gameStatus } from './types'
 
@@ -232,7 +233,3 @@ class Store implements IStore {
   }
 }
 export default Store
-
-function UtcTime() {
-  return new Date().toISOString()
-}
