@@ -1,4 +1,4 @@
-export enum value {
+export enum gameMoveValue {
   X = 'X',
   O = 'O',
   null = 'null',

@@ -1,6 +1,12 @@
-import { value } from '../../lib/types'
+import * as React from 'react'
+import { gameMoveValue } from '../../lib/types'
 
-export default function Square(props: { onClick: any; value: value }) {
+type SquareProps = {
+  position: number
+  value: string
+  onClick: () => void
+}
+const Square: React.FC<SquareProps> = ({ onClick, position, value }) => {
   const x: JSX.Element = (
     <svg className="w-full h-full" viewBox="0 0 40 40">
       <path
@@ -21,18 +27,15 @@ export default function Square(props: { onClick: any; value: value }) {
     </svg>
   )
 
-  const valuesMap = {
-    [value.X]: x,
-    [value.O]: o,
-    [value.null]: '',
-  }
-
   return (
     <button
       className="bg-white border border-solid border-gray-400 p-0 text-center float-left focus:outline-none"
-      onClick={props.onClick}
+      onClick={value == gameMoveValue.null ? onClick : () => {}}
     >
-      {valuesMap[props.value]}
+      {value == gameMoveValue.X && x}
+      {value == gameMoveValue.O && o}
+      {value == gameMoveValue.null && ''}
     </button>
   )
 }
+export default Square

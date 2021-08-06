@@ -1,17 +1,54 @@
+import * as React from 'react'
+import toast from 'react-hot-toast'
 import { Dispatch, SetStateAction, useState } from 'react'
 import Square from './Square'
-import { value } from '../../lib/types'
+import { gameMoveValue } from '../../lib/types'
+import { GameStoreContext } from '../../pages/games/[id]'
+import { observer } from 'mobx-react-lite'
 
-export default function Board() {
-  let [squares, setSquares]: [squares: value[], setSquares: Dispatch<SetStateAction<any[]>>] =
-    useState(Array(9).fill(value.null))
-  let [xIsNext, setXIsNext] = useState(true)
+const Board: React.FC = observer(() => {
+  const _gameStore = React.useContext(GameStoreContext)
+  const isMyTurn = _gameStore?.isMyTurn
+  const [squares, setSquares]: [
+    squares: gameMoveValue[],
+    setSquares: Dispatch<SetStateAction<any[]>>
+  ] = useState(Array(9).fill(gameMoveValue.null))
+
+  React.useEffect(() => {
+    setSquares(_gameStore.gameBoardValues)
+  }, [_gameStore.gameBoardValues])
 
   const winner = calculateWinner(squares)
-  if (winner !== value.null) {
+  if (winner !== gameMoveValue.null) {
     console.log(`${winner} wins!`)
-  } else if (squares.filter((e) => e !== value.null).length >= 9) {
+  } else if (squares.filter((e) => e !== gameMoveValue.null).length >= 9) {
     console.log('Draw!')
+  }
+
+  async function handleClick(i: number) {
+    if (!isMyTurn) {
+      toast.error("It's not your turn. Please wait!")
+      return
+    } else {
+      const currentSquares = squares.slice()
+      const value = _gameStore.xIsNext ? gameMoveValue.X : gameMoveValue.O
+      currentSquares[i] = value
+      setSquares(currentSquares)
+
+      await _gameStore?.createGameMoveAsync(i, value)
+
+      if (
+        calculateWinner(currentSquares) !== gameMoveValue.null ||
+        currentSquares[i] !== gameMoveValue.null
+      ) {
+        console.log(currentSquares[i])
+        return
+      }
+    }
+  }
+
+  function renderSquare(i: number) {
+    return <Square value={squares[i]} position={i} onClick={() => handleClick(i)} />
   }
 
   return (
@@ -27,24 +64,11 @@ export default function Board() {
       {renderSquare(8)}
     </div>
   )
+})
 
-  function handleClick(i: number) {
-    const currentSquares = squares.slice()
-    if (calculateWinner(currentSquares) !== value.null || currentSquares[i] !== value.null) {
-      console.log(currentSquares[i])
-      return
-    }
-    currentSquares[i] = xIsNext ? value.X : value.O
-    setSquares(currentSquares)
-    setXIsNext(!xIsNext)
-  }
+export default Board
 
-  function renderSquare(i: number) {
-    return <Square value={squares[i]} onClick={() => handleClick(i)} />
-  }
-}
-
-function calculateWinner(squares: value[]) {
+function calculateWinner(squares: gameMoveValue[]) {
   const winningPatterns = [
     [0, 1, 2],
     [3, 4, 5],
@@ -61,5 +85,5 @@ function calculateWinner(squares: value[]) {
       return squares[a]
     }
   }
-  return value.null
+  return gameMoveValue.null
 }

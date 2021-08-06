@@ -22,7 +22,7 @@ export function initializeStore() {
   return _store
 }
 
-interface IStore {
+export interface IStore {
   currentGame: Dictionary<any> | null
   games: Dictionary<any>[]
   gameInvitations: Dictionary<any>[]
