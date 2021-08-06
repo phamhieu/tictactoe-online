@@ -51,7 +51,6 @@ class Store implements IStore {
   user: User | null = null
 
   constructor() {
-    console.log('***** Store constructor')
     makeAutoObservable(this)
   }
 
