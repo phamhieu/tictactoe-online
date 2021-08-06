@@ -5,6 +5,7 @@ import {
   EmojiHappyIcon,
   ChevronDoubleRightIcon,
 } from '@heroicons/react/outline'
+import { joinClassNames } from '../lib/helper'
 
 const items = [
   {
@@ -31,10 +32,6 @@ const items = [
   },
 ]
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
-
 const GameRules: React.FC = () => {
   return (
     <div className="max-w-lg mx-auto">
@@ -48,7 +45,7 @@ const GameRules: React.FC = () => {
               <div className="relative group py-4 flex items-center space-x-3">
                 <div className="flex-shrink-0">
                   <span
-                    className={classNames(
+                    className={joinClassNames(
                       item.iconColor,
                       'inline-flex items-center justify-center h-10 w-10 rounded-lg'
                     )}

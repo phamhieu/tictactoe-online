@@ -5,6 +5,7 @@ import { StoreContext } from '../lib/store'
 import { supabase } from '../lib/supabaseClient'
 import { gameStatus } from '../lib/types'
 import { runInAction } from 'mobx'
+import { joinClassNames } from '../lib/helper'
 
 const CurrentGame: React.FC = observer(() => {
   const _store = React.useContext(StoreContext)
@@ -125,7 +126,7 @@ const CurrentGameStatus: React.FC<CurrentGameStatusProps> = observer(({ id, stat
       <div className="mt-8">
         <button
           type="button"
-          className={classNames(
+          className={joinClassNames(
             status == gameStatus.READY
               ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
               : 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
@@ -150,7 +151,3 @@ const CurrentGameStatus: React.FC<CurrentGameStatusProps> = observer(({ id, stat
     </>
   )
 })
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
