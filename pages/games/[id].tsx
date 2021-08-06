@@ -27,7 +27,7 @@ export default function GameBoard() {
   return (
     <GameStoreContext.Provider value={_gameStore}>
       <Layout>
-        <ProfileHeading />
+        <ProfileHeading backtoHome={true} />
         <div className="max-w-sm max-h-96 w-screen h-screen mx-auto my-8">
           <Board />
         </div>

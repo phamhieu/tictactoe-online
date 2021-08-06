@@ -1,11 +1,15 @@
 import * as React from 'react'
+import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabaseClient'
 import { StoreContext } from '../../lib/store'
 import { observer } from 'mobx-react-lite'
 import Loading from '../Loading'
 
-const ProfileHeading: React.FC = observer(() => {
+type ProfileHeadingProps = {
+  backtoHome?: boolean
+}
+const ProfileHeading: React.FC<ProfileHeadingProps> = observer(({ backtoHome }) => {
   const _store = React.useContext(StoreContext)
 
   React.useEffect(() => {
@@ -19,7 +23,7 @@ const ProfileHeading: React.FC = observer(() => {
   return (
     <div className="md:flex md:items-center md:justify-between md:space-x-5">
       <Profile />
-      <LogoutButton />
+      {backtoHome ? <BackToHome /> : <LogoutButton />}
     </div>
   )
 })
@@ -73,6 +77,18 @@ const LogoutButton: React.FC = () => {
         {loading && <Loading />}
         Logout
       </button>
+    </div>
+  )
+}
+
+const BackToHome: React.FC = () => {
+  return (
+    <div className="mt-6 flex flex-col-reverse justify-stretch space-y-4 space-y-reverse sm:flex-row-reverse sm:justify-end sm:space-x-reverse sm:space-y-0 sm:space-x-3 md:mt-0 md:flex-row md:space-x-3">
+      <Link href="/">
+        <a className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+          Home
+        </a>
+      </Link>
     </div>
   )
 }
