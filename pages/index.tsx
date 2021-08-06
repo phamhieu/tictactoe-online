@@ -78,11 +78,20 @@ const MyGames: React.FC = observer(() => {
 
 const CurrentGame: React.FC = observer(() => {
   const _store = React.useContext(StoreContext)
-  const { from_id, to_id } = _store.currentGame ?? {}
+  const [loading, setLoading] = React.useState(false)
+
+  const { id, from_id, to_id } = _store.currentGame ?? {}
   const from = _store.profiles.find((x) => x.id == from_id)
   const to = _store.profiles.find((x) => x.id == to_id)
 
-  const handleCancel = async (e: React.MouseEvent<HTMLElement>) => {}
+  const handleCancel = async (e: React.MouseEvent<HTMLElement>) => {
+    try {
+      setLoading(true)
+      await _store.cancelInvitation(id)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="mt-10 max-w-lg mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-start-3 lg:col-end-6 lg:row-start-1 lg:row-end-4">
@@ -127,6 +136,7 @@ const CurrentGame: React.FC = observer(() => {
               type="button"
               className="block w-full px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               onClick={handleCancel}
+              disabled={loading}
             >
               Cancel
             </button>

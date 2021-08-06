@@ -18,10 +18,12 @@ interface IStore {
   session: AuthSession | null
   sortedProfiles: Dictionary<any>[]
   user: User | null
+  cancelInvitation: (id: string) => Promise<void>
   createNewGameAsync: (userId: string) => Promise<void>
   getGamesAsync: () => Promise<void>
   getProfileAsync: (id: string) => Promise<void>
   getProfilesAsync: () => Promise<void>
+  replyInvitation: (id: string, accepted: boolean) => Promise<void>
   updatePresenceAsync: () => Promise<void>
   updatePresenceStatus: (id: string, status: boolean) => void
 }
@@ -51,6 +53,23 @@ class Store implements IStore {
     })
   }
 
+  async cancelInvitation(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .update({ status: 'CANCEL' }, { returning: 'minimal' })
+        .match({ id })
+      if (error) throw error
+      runInAction(() => {
+        this.currentGame = null
+        this.games = this.games.filter((x) => x.id != id)
+      })
+      console.log('**** cancelInvitation: ', data)
+    } catch (error) {
+      console.log('cancelInvitation: ', error)
+    }
+  }
+
   async createNewGameAsync(userId: string) {
     try {
       const { data, error } = await supabase
@@ -68,6 +87,30 @@ class Store implements IStore {
       console.log('**** createNewGameAsync: ', data)
     } catch (error) {
       console.log('createNewGameAsync: ', error)
+    }
+  }
+
+  async replyInvitation(id: string, accepted: boolean) {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .update({ status: accepted ? 'READY' : 'DENY', replied_at: UtcTime() })
+        .match({ id })
+      if (error) throw error
+      if (data && data.length > 0) {
+        let updatedIndex = this.games.findIndex((x) => x.id === id)
+        if (accepted) {
+          runInAction(() => {
+            this.currentGame = data[0]
+            this.games.splice(updatedIndex, 1, data[0])
+          })
+        } else {
+          this.games = this.games.filter((x) => x.id != id)
+        }
+      }
+      console.log('**** replyInvitation: ', data)
+    } catch (error) {
+      console.log('replyInvitation: ', error)
     }
   }
 

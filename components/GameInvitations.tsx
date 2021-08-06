@@ -36,11 +36,26 @@ type GameInvitationItemProps = {
 }
 const GameInvitationItem: React.FC<GameInvitationItemProps> = observer(({ id, fromId }) => {
   const _store = React.useContext(StoreContext)
+  const [loading, setLoading] = React.useState(false)
   const from = _store.profiles.find((x) => x.id == fromId)
 
-  const handleAccept = async (e: React.MouseEvent<HTMLElement>) => {}
+  const handleAccept = async (e: React.MouseEvent<HTMLElement>) => {
+    try {
+      setLoading(true)
+      await _store.replyInvitation(id, true)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const handleDeny = async (e: React.MouseEvent<HTMLElement>) => {}
+  const handleDeny = async (e: React.MouseEvent<HTMLElement>) => {
+    try {
+      setLoading(true)
+      await _store.replyInvitation(id, false)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <li>
@@ -56,6 +71,7 @@ const GameInvitationItem: React.FC<GameInvitationItemProps> = observer(({ id, fr
             type="button"
             className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             onClick={handleAccept}
+            disabled={loading}
           >
             Accept
           </button>
@@ -63,6 +79,7 @@ const GameInvitationItem: React.FC<GameInvitationItemProps> = observer(({ id, fr
             type="button"
             className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             onClick={handleDeny}
+            disabled={loading}
           >
             Deny
           </button>
