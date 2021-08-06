@@ -16,6 +16,7 @@ export interface IGameStore {
   createGameMoveAsync: (position: number, value: string) => Promise<void>
   getGameAsync: (id: string) => Promise<void>
   getGameMovesAsync: (id: string) => Promise<void>
+  receiveGameMove: (value: Dictionary<any>) => void
 }
 
 class GameStore implements IGameStore {
@@ -77,7 +78,8 @@ class GameStore implements IGameStore {
   get winner() {
     if (this.gameMoves.length > 0) {
       const lastMove = this.gameMoves[0]
-      return lastMove.profile
+      if (lastMove.user_id == this.game?.from_id) return this.game?.from
+      else return this.game?.to
     } else {
       return null
     }
@@ -97,9 +99,7 @@ class GameStore implements IGameStore {
       ])
       if (error) throw error
       if (data && data.length > 0) {
-        runInAction(() => {
-          this.gameMoves.unshift(data)
-        })
+        this.receiveGameMove(data[0])
       }
       console.log('**** createGameMoveAsync: ', data)
 
@@ -159,6 +159,15 @@ class GameStore implements IGameStore {
     } catch (error) {
       console.log('getGameMovesAsync: ', error)
     }
+  }
+
+  receiveGameMove(payload: Dictionary<any>) {
+    const { id, position, value } = payload
+    const found = this.gameMoves.find((x) => x.id == id)
+    if (!found) {
+      this.gameMoves.unshift(payload)
+    }
+    this.gameBoardValues[position] = value
   }
 }
 export default GameStore

@@ -8,6 +8,8 @@ import ProfileHeading from '../../components/Layout/ProfileHeading'
 import { joinClassNames } from '../../lib/helper'
 import { StoreContext } from '../../lib/store'
 import GameStore, { IGameStore } from '../../lib/gameStore'
+import { supabase } from '../../lib/supabaseClient'
+import { runInAction } from 'mobx'
 
 export const GameStoreContext = React.createContext<IGameStore>(undefined!)
 
@@ -18,9 +20,22 @@ export default function GameBoard() {
   const { id } = router.query
 
   React.useEffect(() => {
-    if (id) {
-      _gameStore.getGameAsync(id as string)
-      _gameStore.getGameMovesAsync(id as string)
+    _gameStore.getGameAsync(id as string)
+    _gameStore.getGameMovesAsync(id as string)
+
+    const mySubscription = supabase
+      .from(`game_moves:game_id=eq.${id}`)
+      .on('INSERT', (payload) => {
+        console.log('New INSERT received!', payload)
+        const id = payload?.new?.id
+        const insertedPayload = payload?.new
+        if (id && insertedPayload) {
+          _gameStore.receiveGameMove(insertedPayload)
+        }
+      })
+      .subscribe()
+    return () => {
+      mySubscription.unsubscribe()
     }
   }, [id])
 
