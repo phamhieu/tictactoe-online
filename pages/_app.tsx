@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import type { AppProps } from 'next/app'
 import { Toaster } from 'react-hot-toast'
-import Store, { StoreContext } from '../lib/store'
+import { initializeStore, StoreContext } from '../lib/store'
 import { supabase } from '../lib/supabaseClient'
 import { AuthSession } from '@supabase/supabase-js'
 
@@ -13,7 +13,7 @@ const PortalRootWithNoSSR = dynamic(
 )
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const store = new Store()
+  const store = initializeStore()
 
   useEffect(() => {
     store.setSession(supabase.auth.session())

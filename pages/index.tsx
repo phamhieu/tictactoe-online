@@ -13,11 +13,7 @@ import { supabase } from '../lib/supabaseClient'
 
 function Home() {
   const _store = React.useContext(StoreContext)
-  return (
-    <>
-      <Layout>{_store.session ? <GameRoom /> : <Auth />}</Layout>
-    </>
-  )
+  return <Layout>{_store.session ? <GameRoom /> : <Auth />}</Layout>
 }
 
 export default observer(Home)

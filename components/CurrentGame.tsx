@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { observer } from 'mobx-react-lite'
+import { useRouter } from 'next/router'
 import Loading from '../components/Loading'
 import { StoreContext } from '../lib/store'
 import { supabase } from '../lib/supabaseClient'
@@ -82,6 +83,7 @@ type CurrentGameStatusProps = {
 }
 const CurrentGameStatus: React.FC<CurrentGameStatusProps> = observer(({ id, status }) => {
   const _store = React.useContext(StoreContext)
+  const router = useRouter()
   const [loading, setLoading] = React.useState(false)
 
   const handleCancel = async (e: React.MouseEvent<HTMLElement>) => {
@@ -101,10 +103,7 @@ const CurrentGameStatus: React.FC<CurrentGameStatusProps> = observer(({ id, stat
   }
 
   const handleStartGame = (e: React.MouseEvent<HTMLElement>) => {
-    runInAction(() => {
-      _store.currentGame = null
-      _store.games = _store.games.filter((x) => x.id != id)
-    })
+    router.push(`/games/${id}`)
   }
 
   return (

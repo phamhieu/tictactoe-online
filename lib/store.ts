@@ -10,6 +10,18 @@ export interface Dictionary<T> {
   [Key: string]: T
 }
 
+let store: Store
+export function initializeStore() {
+  const _store = store ?? new Store()
+
+  // For SSG and SSR always create a new store
+  if (typeof window === 'undefined') return _store
+  // Create the store once in the client
+  if (!store) store = _store
+
+  return _store
+}
+
 interface IStore {
   currentGame: Dictionary<any> | null
   games: Dictionary<any>[]
@@ -38,6 +50,7 @@ class Store implements IStore {
   user: User | null = null
 
   constructor() {
+    console.log('***** Store constructor')
     makeAutoObservable(this)
   }
 
@@ -131,7 +144,9 @@ class Store implements IStore {
         this.games = temp.sort((a, b) => {
           return b.inserted_at - a.inserted_at
         })
-        this.currentGame = temp.find((x) => x.from_id == this.user?.id)
+        this.currentGame = temp.find(
+          (x) => x.status == gameStatus.READY || x.from_id == this.user?.id
+        )
       })
       console.log('**** getGamesAsync: ', data)
     } catch (error) {
@@ -179,6 +194,7 @@ class Store implements IStore {
   }
 
   async updatePresenceAsync() {
+    if (!this.user?.id) return
     try {
       const { error } = await supabase
         .from('presence')
@@ -210,6 +226,7 @@ class Store implements IStore {
   }
 
   setSession(value: AuthSession | null) {
+    console.log('*** setSession: ', value)
     this.session = value
     this.user = value?.user ?? null
   }
