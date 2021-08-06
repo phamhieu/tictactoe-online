@@ -179,7 +179,6 @@ class Store implements IStore {
   }
 
   async updatePresenceAsync() {
-    console.log('**** updatePresenceAsync')
     try {
       const { error } = await supabase
         .from('presence')
