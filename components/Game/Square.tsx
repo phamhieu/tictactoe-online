@@ -1,12 +1,14 @@
 import * as React from 'react'
+import { joinClassNames } from '../../lib/helper'
 import { gameMoveValue } from '../../lib/types'
 
 type SquareProps = {
-  position: number
   value: string
-  onClick: () => void
+  onClick?: () => void
 }
-const Square: React.FC<SquareProps> = ({ onClick, position, value }) => {
+const Square: React.FC<SquareProps> = ({ onClick, value }) => {
+  const isReadonly = value != gameMoveValue.null || !onClick
+
   const x: JSX.Element = (
     <svg className="w-full h-full" viewBox="0 0 40 40">
       <path
@@ -29,8 +31,12 @@ const Square: React.FC<SquareProps> = ({ onClick, position, value }) => {
 
   return (
     <button
-      className="bg-white border border-solid border-gray-400 p-0 text-center float-left focus:outline-none"
-      onClick={value == gameMoveValue.null ? onClick : () => {}}
+      className={joinClassNames(
+        isReadonly ? 'cursor-not-allowed' : 'cursor-pointer',
+        'bg-white border border-solid border-gray-400 p-0 text-center float-left focus:outline-none'
+      )}
+      onClick={onClick}
+      disabled={isReadonly}
     >
       {value == gameMoveValue.X && x}
       {value == gameMoveValue.O && o}

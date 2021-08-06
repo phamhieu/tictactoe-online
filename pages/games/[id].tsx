@@ -43,9 +43,19 @@ export default function GameBoard() {
 const CurrentMoveLabel: React.FC = observer(() => {
   const _gameStore = React.useContext(GameStoreContext)
   return (
-    <div className="text-center">
-      {_gameStore?.isMyTurn ? <p>It's your turn</p> : <p>It's the other turn</p>}
-    </div>
+    <>
+      {_gameStore.isEnded ? (
+        <div className="text-center">
+          {_gameStore.isDraw
+            ? "No Winner! It's a Draw!"
+            : `The game ENDED. The winner is ${_gameStore.winner?.username ?? 'Anonymous'}`}
+        </div>
+      ) : (
+        <div className="text-center">
+          {_gameStore.isMyTurn ? <p>It's your turn</p> : <p>It's the other turn</p>}
+        </div>
+      )}
+    </>
   )
 })
 

@@ -1,54 +1,35 @@
 import * as React from 'react'
 import toast from 'react-hot-toast'
-import { Dispatch, SetStateAction, useState } from 'react'
 import Square from './Square'
 import { gameMoveValue } from '../../lib/types'
 import { GameStoreContext } from '../../pages/games/[id]'
 import { observer } from 'mobx-react-lite'
+import { runInAction } from 'mobx'
 
 const Board: React.FC = observer(() => {
   const _gameStore = React.useContext(GameStoreContext)
   const isMyTurn = _gameStore?.isMyTurn
-  const [squares, setSquares]: [
-    squares: gameMoveValue[],
-    setSquares: Dispatch<SetStateAction<any[]>>
-  ] = useState(Array(9).fill(gameMoveValue.null))
-
-  React.useEffect(() => {
-    setSquares(_gameStore.gameBoardValues)
-  }, [_gameStore.gameBoardValues])
-
-  const winner = calculateWinner(squares)
-  if (winner !== gameMoveValue.null) {
-    console.log(`${winner} wins!`)
-  } else if (squares.filter((e) => e !== gameMoveValue.null).length >= 9) {
-    console.log('Draw!')
-  }
+  const isEnded = _gameStore?.isEnded
 
   async function handleClick(i: number) {
     if (!isMyTurn) {
       toast.error("It's not your turn. Please wait!")
-      return
     } else {
-      const currentSquares = squares.slice()
       const value = _gameStore.xIsNext ? gameMoveValue.X : gameMoveValue.O
-      currentSquares[i] = value
-      setSquares(currentSquares)
-
+      runInAction(() => {
+        _gameStore.gameBoardValues[i] = value
+      })
       await _gameStore?.createGameMoveAsync(i, value)
-
-      if (
-        calculateWinner(currentSquares) !== gameMoveValue.null ||
-        currentSquares[i] !== gameMoveValue.null
-      ) {
-        console.log(currentSquares[i])
-        return
-      }
     }
   }
 
   function renderSquare(i: number) {
-    return <Square value={squares[i]} position={i} onClick={() => handleClick(i)} />
+    return (
+      <Square
+        value={_gameStore.gameBoardValues[i]}
+        onClick={isEnded ? undefined : () => handleClick(i)}
+      />
+    )
   }
 
   return (
@@ -67,23 +48,3 @@ const Board: React.FC = observer(() => {
 })
 
 export default Board
-
-function calculateWinner(squares: gameMoveValue[]) {
-  const winningPatterns = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ]
-  for (let i = 0; i < winningPatterns.length; i++) {
-    const [a, b, c] = winningPatterns[i]
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a]
-    }
-  }
-  return gameMoveValue.null
-}
