@@ -3,3 +3,11 @@ export enum value {
   O = 'O',
   null = 'null',
 }
+
+export enum gameStatus {
+  CANCEL = 'CANCEL',
+  COMPLETE = 'COMPLETE',
+  DENY = 'DENY',
+  READY = 'READY',
+  WAITING = 'WAITING',
+}

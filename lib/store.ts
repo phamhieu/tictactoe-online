@@ -2,6 +2,7 @@ import { AuthSession, User } from '@supabase/supabase-js'
 import { makeAutoObservable, runInAction } from 'mobx'
 import { createContext } from 'react'
 import { supabase } from './supabaseClient'
+import { gameStatus } from './types'
 
 export const StoreContext = createContext<IStore>(undefined!)
 
@@ -24,6 +25,7 @@ interface IStore {
   getProfileAsync: (id: string) => Promise<void>
   getProfilesAsync: () => Promise<void>
   replyInvitation: (id: string, accepted: boolean) => Promise<void>
+  updateGame: (id: string, value: Dictionary<any>) => void
   updatePresenceAsync: () => Promise<void>
   updatePresenceStatus: (id: string, status: boolean) => void
 }
@@ -57,7 +59,7 @@ class Store implements IStore {
     try {
       const { data, error } = await supabase
         .from('games')
-        .update({ status: 'CANCEL' }, { returning: 'minimal' })
+        .update({ status: gameStatus.CANCEL }, { returning: 'minimal' })
         .match({ id })
       if (error) throw error
       runInAction(() => {
@@ -94,18 +96,20 @@ class Store implements IStore {
     try {
       const { data, error } = await supabase
         .from('games')
-        .update({ status: accepted ? 'READY' : 'DENY', replied_at: UtcTime() })
+        .update({ status: accepted ? gameStatus.READY : gameStatus.DENY, replied_at: UtcTime() })
         .match({ id })
       if (error) throw error
       if (data && data.length > 0) {
-        let updatedIndex = this.games.findIndex((x) => x.id === id)
+        let gameIndex = this.games.findIndex((x) => x.id === id)
         if (accepted) {
           runInAction(() => {
+            this.games.splice(gameIndex, 1, data[0])
             this.currentGame = data[0]
-            this.games.splice(updatedIndex, 1, data[0])
           })
         } else {
-          this.games = this.games.filter((x) => x.id != id)
+          runInAction(() => {
+            this.games = this.games.filter((x) => x.id != id)
+          })
         }
       }
       console.log('**** replyInvitation: ', data)
@@ -120,7 +124,7 @@ class Store implements IStore {
         .from('games')
         .select()
         .or(`from_id.eq.${this.user?.id},to_id.eq.${this.user?.id}`)
-        .in('status', ['WAITING', 'READY'])
+        .in('status', [gameStatus.WAITING, gameStatus.READY])
       if (error) throw error
       const temp = data ?? []
       runInAction(() => {
@@ -184,6 +188,18 @@ class Store implements IStore {
       if (error) throw error
     } catch (error) {
       console.log('updatePresenceAsync: ', error)
+    }
+  }
+
+  updateGame = (id: string, value: Dictionary<any>) => {
+    const found = this.games.find((x) => x.id == id)
+    if (found) {
+      found.status = value.status
+      found.replied_at = value.replied_at
+    }
+    if (this.currentGame && this.currentGame.id == id) {
+      this.currentGame.status = value.status
+      this.currentGame.replied_at = value.replied_at
     }
   }
 
