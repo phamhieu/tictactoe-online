@@ -3,8 +3,8 @@
 ## Todos
 
 - [x] Implement Presence system
-- [ ] Allow to invite other to a 1vs1
-- [ ] Build game rules
+- [x] Allow to invite other to a 1vs1
+- [x] Build game rules
   - [x] Classic tictactoe rule
   - [ ] Everyone has 10 seconds to think in a game. Player with idle time more than 10 seconds will lose the game.
   - [ ] Player with longer idle time will lose a draw game
@@ -13,7 +13,16 @@
 
 ## Getting Started
 
-First, run the development server:
+- create local .env
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+- Run SQL to create tables
+- Enable Realtime replication for tables: presence_status, game, game_moves
+- run the development server:
 
 ```bash
 npm run dev
@@ -24,6 +33,8 @@ yarn dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Schema
+
+### Presence
 
 ```sql
 -- Create a table for Public Profiles
@@ -107,6 +118,43 @@ create trigger on_presence_updated
   after update on public.presence
   for each row when (pg_trigger_depth() = 0)
   execute procedure public.verify_presence_status();
+```
+
+### Game
+
+```sql
+drop type if exists public.game_status;
+drop type if exists public.game_move;
+create type public.game_status as enum ('WAITING', 'DENY', 'READY', 'CANCEL', 'COMPLETE');
+create type public.game_move_value as enum ('X', 'O');
+-- Create a table for Games
+-- from_id will have X, to_id will have O. first_move will decide who can go first.
+create table games (
+  id            uuid default uuid_generate_v4() not null,
+  from_id       uuid references public.profiles not null,
+  to_id         uuid references public.profiles not null,
+  status        game_status default 'WAITING'::public.game_status,
+  first_move    game_move_value not null,
+  inserted_at   timestamp with time zone default timezone('utc'::text, now()) not null,
+  replied_at    timestamp with time zone,
+  completed_at  timestamp with time zone,
+
+  primary key (id)
+);
+
+-- Create a table for Game Moves
+create table game_moves (
+  id          uuid default uuid_generate_v4() not null,
+  game_id     uuid references public.games not null,
+  user_id     uuid references public.profiles not null,
+  turn        int2 not null,
+  position    int2 not null,
+  value       game_move_value not null,
+  duration    int2 not null,
+  inserted_at timestamp with time zone default timezone('utc'::text, now()) not null,
+
+  primary key (id)
+)
 ```
 
 ## License
