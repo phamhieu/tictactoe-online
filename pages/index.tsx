@@ -1,23 +1,29 @@
 import * as React from 'react'
 import { observer } from 'mobx-react-lite'
+import {
+  BanIcon,
+  ViewGridIcon,
+  EmojiHappyIcon,
+  ChevronDoubleRightIcon,
+} from '@heroicons/react/outline'
 import Auth from '../components/Auth'
 import Layout from '../components/Layout'
 import ProfileHeading from '../components/ProfileHeading'
+import OnlinePlayers from '../components/OnlinePlayers'
 import { StoreContext } from '../lib/store'
-import { supabase } from '../lib/supabaseClient'
 
 function Home() {
   const _store = React.useContext(StoreContext)
   return (
     <>
-      <Layout>{_store.session ? <WaitingRoom /> : <Auth />}</Layout>
+      <Layout>{_store.session ? <GameRoom /> : <Auth />}</Layout>
     </>
   )
 }
 
 export default observer(Home)
 
-const WaitingRoom: React.FC = () => {
+const GameRoom: React.FC = () => {
   return (
     <div className="">
       <ProfileHeading />
@@ -47,10 +53,7 @@ const WaitingRoom: React.FC = () => {
               </h2>
               <div className="rounded-lg bg-white overflow-hidden shadow">
                 <div className="p-6">
-                  <div
-                    style={{ height: '30rem', background: 'blue' }}
-                    className="border-2 border-dashed border-gray-300 rounded-lg"
-                  ></div>
+                  <GamesList />
                 </div>
               </div>
             </section>
@@ -61,114 +64,91 @@ const WaitingRoom: React.FC = () => {
   )
 }
 
-const OnlinePlayers: React.FC = observer(() => {
-  const _store = React.useContext(StoreContext)
-
-  React.useEffect(() => {
-    _store.getProfilesAsync()
-
-    const mySubscription = supabase
-      .from('presence_status')
-      .on('INSERT', (payload) => {
-        console.log('New INSERT received!', payload)
-        const id = payload?.new?.id
-        if (id) {
-          _store.getProfileAsync(id)
-        }
-      })
-      .on('UPDATE', (payload) => {
-        console.log('New UPDATE received!', payload)
-        const id = payload?.new?.id
-        const status = payload?.new?.status
-        if (id) {
-          _store.updatePresenceStatus(id, status)
-        }
-      })
-      .subscribe()
-    return () => {
-      mySubscription.unsubscribe()
-    }
-  }, [])
-
-  return (
-    <div className="flex flex-col">
-      <div className="pb-5">
-        <OnlineCounter />
-      </div>
-      <div className="max-h-80 overflow-y-scroll">
-        <div className="flow-root mt-6">
-          <PlayerList />
-        </div>
-      </div>
-    </div>
-  )
-})
-
-const OnlineCounter: React.FC = observer(() => {
+const GamesList: React.FC = observer(() => {
   const _store = React.useContext(StoreContext)
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-blue-100 text-blue-500">
-      <svg className="-ml-0.5 mr-1.5 h-2 w-2 text-green-500" fill="currentColor" viewBox="0 0 8 8">
-        <circle cx={4} cy={4} r={3} />
-      </svg>
-      {_store.onlineCount} Online
-    </span>
-  )
-})
-
-const PlayerList: React.FC = observer(() => {
-  const _store = React.useContext(StoreContext)
-
-  return (
-    <ul className="-my-5 divide-y divide-gray-200">
-      {_store.sortedProfiles.length == 0 && (
-        <li className="py-4">
-          <div className="flex items-center space-x-4">
-            <p className="mt-1 text-sm text-gray-500">Please wait for others to join.</p>
-          </div>
-        </li>
-      )}
-      {_store.sortedProfiles.map(({ id, avatar_url, username, status }) => (
-        <PlayerListItem key={id} avatarUrl={avatar_url} online={status} username={username} />
+    <ul className="divide-y divide-gray-200">
+      {_store.games.length == 0 && <GamesListEmpty />}
+      {_store.games.map((x) => (
+        <GameListItem key={x.id} id={x.id} />
       ))}
     </ul>
   )
 })
 
-type PlayerListItemProps = {
-  avatarUrl?: string
-  online: boolean
-  username: string
+const items = [
+  {
+    description: "The game is played on a grid that's 3 squares by 3 squares.",
+    iconColor: 'bg-blue-500',
+    icon: ViewGridIcon,
+  },
+  {
+    description: 'Players take turns putting their marks (X or O) in empty squares.',
+    iconColor: 'bg-purple-500',
+    icon: ChevronDoubleRightIcon,
+  },
+  {
+    description:
+      'The first player to get 3 of her marks in a row (up, down, across, or diagonally) is the winner.',
+    iconColor: 'bg-green-500',
+    icon: EmojiHappyIcon,
+  },
+  {
+    description:
+      'When all 9 squares are full, the game is over. If no player has 3 marks in a row, the game ends in a tie.',
+    iconColor: 'bg-red-500',
+    icon: BanIcon,
+  },
+]
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ')
 }
-const PlayerListItem: React.FC<PlayerListItemProps> = ({ avatarUrl, username, online }) => {
+const GamesListEmpty: React.FC = () => {
   return (
-    <li key={username} className="py-4">
-      <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0">
-          <img
-            className="h-8 w-8 rounded-full"
-            src={avatarUrl ?? 'https://via.placeholder.com/100'}
-            alt="avatar image"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{username}</p>
-          {online ? (
-            <p className="text-sm text-blue-500 truncate">online</p>
-          ) : (
-            <p className="text-sm text-gray-500 truncate">offline</p>
-          )}
-        </div>
-        <div className="pr-1">
-          <button
-            type="button"
-            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            disabled={!online}
-          >
-            Invite
-          </button>
-        </div>
+    <div className="max-w-lg mx-auto">
+      <div className="text-center">
+        <h2 className="text-lg font-medium text-gray-900">No game available</h2>
+        <p className="mt-1 text-sm text-gray-500">Please invite other to a 1vs1 game.</p>
       </div>
-    </li>
+      <div className="mt-10">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          The game rules
+        </h3>
+        <ul role="list" className="mt-4 border-t border-b border-gray-200 divide-y divide-gray-200">
+          {items.map((item, itemIdx) => (
+            <li key={itemIdx}>
+              <div className="relative group py-4 flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <span
+                    className={classNames(
+                      item.iconColor,
+                      'inline-flex items-center justify-center h-10 w-10 rounded-lg'
+                    )}
+                  >
+                    <item.icon className="h-6 w-6 text-white" aria-hidden="true" />
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-gray-500">{item.description}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   )
 }
+
+type GameListItemProps = {
+  id: string
+}
+const GameListItem: React.FC<GameListItemProps> = observer(({ id }) => {
+  const _store = React.useContext(StoreContext)
+  return (
+    <li className="py-4">
+      <div className="block border-2 border-dashed border-gray-300 rounded bg-white h-16 w-full text-gray-200"></div>
+    </li>
+  )
+})

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^1.0.3",
     "@radix-ui/react-portal": "^0.0.14",
     "@supabase/supabase-js": "^1.21.0",
     "awesome-debounce-promise": "^2.1.0",

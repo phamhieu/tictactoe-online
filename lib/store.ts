@@ -10,11 +10,15 @@ export interface Dictionary<T> {
 }
 
 interface IStore {
+  currentGame: Dictionary<any> | null
+  games: Dictionary<any>[]
   onlineCount: number
   profiles: Dictionary<any>[]
   session: AuthSession | null
   sortedProfiles: Dictionary<any>[]
   user: User | null
+  createNewGameAsync: (userId: string) => void
+  getGamesAsync: () => void
   getProfileAsync: (id: string) => void
   getProfilesAsync: () => void
   updatePresenceAsync: () => void
@@ -22,9 +26,11 @@ interface IStore {
 }
 
 class Store implements IStore {
+  currentGame: Dictionary<any> | null = null
+  games: Dictionary<any>[] = []
+  profiles: Dictionary<any>[] = []
   session: AuthSession | null = null
   user: User | null = null
-  profiles: Dictionary<any>[] = []
 
   constructor() {
     makeAutoObservable(this)
@@ -38,6 +44,43 @@ class Store implements IStore {
 
   get onlineCount() {
     return this.profiles.filter((x) => x.status).length
+  }
+
+  async createNewGameAsync(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .insert([
+          { from_id: this.user?.id, to_id: userId, first_move: Math.random() < 0.5 ? 'X' : 'O' },
+        ])
+      if (error) throw error
+      if (data && data.length > 0) {
+        runInAction(() => {
+          this.currentGame = data[0]
+          this.games.push(data)
+        })
+      }
+      console.log('**** createNewGameAsync: ', data)
+    } catch (error) {
+      console.log('createNewGameAsync: ', error)
+    }
+  }
+
+  async getGamesAsync() {
+    try {
+      const { error, data } = await supabase
+        .from('games')
+        .select()
+        .eq('from_id', this.user?.id)
+        .in('status', ['WAITING', 'READY'])
+      if (error) throw error
+      runInAction(() => {
+        this.games = data ?? []
+      })
+      console.log('**** getGamesAsync: ', data)
+    } catch (error) {
+      console.log('getGamesAsync: ', error)
+    }
   }
 
   async getProfilesAsync() {
