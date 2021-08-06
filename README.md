@@ -16,6 +16,7 @@
 - create local .env
 
 ```
+NEXT_PUBLIC_AUTH_REDIRECT_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
