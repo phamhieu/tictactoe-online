@@ -12,16 +12,17 @@ export interface Dictionary<T> {
 interface IStore {
   currentGame: Dictionary<any> | null
   games: Dictionary<any>[]
+  gameInvitations: Dictionary<any>[]
   onlineCount: number
   profiles: Dictionary<any>[]
   session: AuthSession | null
   sortedProfiles: Dictionary<any>[]
   user: User | null
-  createNewGameAsync: (userId: string) => void
-  getGamesAsync: () => void
-  getProfileAsync: (id: string) => void
-  getProfilesAsync: () => void
-  updatePresenceAsync: () => void
+  createNewGameAsync: (userId: string) => Promise<void>
+  getGamesAsync: () => Promise<void>
+  getProfileAsync: (id: string) => Promise<void>
+  getProfilesAsync: () => Promise<void>
+  updatePresenceAsync: () => Promise<void>
   updatePresenceStatus: (id: string, status: boolean) => void
 }
 
@@ -36,14 +37,18 @@ class Store implements IStore {
     makeAutoObservable(this)
   }
 
-  get sortedProfiles() {
-    return this.profiles.slice().sort((a, b) => {
-      return b.status - a.status || a.username.localeCompare(b.username)
-    })
+  get gameInvitations() {
+    return this.games.filter((x) => x.to_id == this.user?.id)
   }
 
   get onlineCount() {
     return this.profiles.filter((x) => x.status).length
+  }
+
+  get sortedProfiles() {
+    return this.profiles.slice().sort((a, b) => {
+      return b.status - a.status || a.username.localeCompare(b.username)
+    })
   }
 
   async createNewGameAsync(userId: string) {
@@ -71,11 +76,15 @@ class Store implements IStore {
       const { error, data } = await supabase
         .from('games')
         .select()
-        .eq('from_id', this.user?.id)
+        .or(`from_id.eq.${this.user?.id},to_id.eq.${this.user?.id}`)
         .in('status', ['WAITING', 'READY'])
       if (error) throw error
+      const temp = data ?? []
       runInAction(() => {
-        this.games = data ?? []
+        this.games = temp.sort((a, b) => {
+          return b.inserted_at - a.inserted_at
+        })
+        this.currentGame = temp.find((x) => x.from_id == this.user?.id)
       })
       console.log('**** getGamesAsync: ', data)
     } catch (error) {
@@ -94,7 +103,7 @@ class Store implements IStore {
           return { ...x, status: x.presence_status[0].status }
         }) ?? []
       runInAction(() => {
-        this.profiles = temp.filter((x) => x.id != this.user?.id)
+        this.profiles = temp
       })
       console.log('**** getProfilesAsync: ', temp)
     } catch (error) {

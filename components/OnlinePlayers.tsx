@@ -1,7 +1,9 @@
 import * as React from 'react'
+import toast from 'react-hot-toast'
 import { observer } from 'mobx-react-lite'
 import { StoreContext } from '../lib/store'
 import { supabase } from '../lib/supabaseClient'
+import Loading from '../components/Loading'
 
 const OnlinePlayers: React.FC = observer(() => {
   const _store = React.useContext(StoreContext)
@@ -73,46 +75,70 @@ const PlayerList: React.FC = observer(() => {
         </li>
       )}
       {_store.sortedProfiles.map(({ id, avatar_url, username, status }) => (
-        <PlayerListItem key={id} avatarUrl={avatar_url} online={status} username={username} />
+        <PlayerListItem
+          key={id}
+          id={id}
+          avatarUrl={avatar_url}
+          online={status}
+          username={username}
+        />
       ))}
     </ul>
   )
 })
 
 type PlayerListItemProps = {
+  id: string
   avatarUrl?: string
   online: boolean
   username: string
 }
-const PlayerListItem: React.FC<PlayerListItemProps> = ({ avatarUrl, username, online }) => {
-  return (
-    <li key={username} className="py-4">
-      <div className="flex items-center space-x-4">
-        <div className="flex-shrink-0">
-          <img
-            className="h-8 w-8 rounded-full"
-            src={avatarUrl ?? 'https://via.placeholder.com/100'}
-            alt="avatar image"
-          />
+const PlayerListItem: React.FC<PlayerListItemProps> = observer(
+  ({ id, avatarUrl, username, online }) => {
+    const _store = React.useContext(StoreContext)
+    const [loading, setLoading] = React.useState(false)
+
+    const handleInvite = async (e: React.MouseEvent<HTMLElement>) => {
+      try {
+        setLoading(true)
+        await _store.createNewGameAsync(id)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    return (
+      <li key={username} className="py-4">
+        <div className="flex items-center space-x-4">
+          <div className="flex-shrink-0">
+            <img
+              className="h-8 w-8 rounded-full"
+              src={avatarUrl ?? 'https://via.placeholder.com/100'}
+              alt="avatar image"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">{username}</p>
+            {online ? (
+              <p className="text-sm text-blue-500 truncate">online</p>
+            ) : (
+              <p className="text-sm text-gray-500 truncate">offline</p>
+            )}
+          </div>
+          <div className="pr-1">
+            {id != _store.user?.id && (
+              <button
+                type="button"
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                onClick={handleInvite}
+                disabled={loading || !online}
+              >
+                {loading ? <Loading /> : 'Invite'}
+              </button>
+            )}
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{username}</p>
-          {online ? (
-            <p className="text-sm text-blue-500 truncate">online</p>
-          ) : (
-            <p className="text-sm text-gray-500 truncate">offline</p>
-          )}
-        </div>
-        <div className="pr-1">
-          <button
-            type="button"
-            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            disabled={!online}
-          >
-            Invite
-          </button>
-        </div>
-      </div>
-    </li>
-  )
-}
+      </li>
+    )
+  }
+)

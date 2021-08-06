@@ -1,15 +1,12 @@
 import * as React from 'react'
 import { observer } from 'mobx-react-lite'
-import {
-  BanIcon,
-  ViewGridIcon,
-  EmojiHappyIcon,
-  ChevronDoubleRightIcon,
-} from '@heroicons/react/outline'
 import Auth from '../components/Auth'
 import Layout from '../components/Layout'
 import ProfileHeading from '../components/ProfileHeading'
 import OnlinePlayers from '../components/OnlinePlayers'
+import GameRules from '../components/GameRules'
+import GameInvitations from '../components/GameInvitations'
+import Loading from '../components/Loading'
 import { StoreContext } from '../lib/store'
 
 function Home() {
@@ -49,11 +46,11 @@ const GameRoom: React.FC = () => {
           <div className="grid grid-cols-1 gap-4 lg:col-span-2">
             <section aria-labelledby="section-2-title">
               <h2 className="sr-only" id="section-2-title">
-                Game status
+                My games
               </h2>
               <div className="rounded-lg bg-white overflow-hidden shadow">
                 <div className="p-6">
-                  <GamesList />
+                  <MyGames />
                 </div>
               </div>
             </section>
@@ -64,91 +61,78 @@ const GameRoom: React.FC = () => {
   )
 }
 
-const GamesList: React.FC = observer(() => {
+const MyGames: React.FC = observer(() => {
   const _store = React.useContext(StoreContext)
+
+  React.useEffect(() => {
+    _store.getGamesAsync()
+  }, [])
+
   return (
-    <ul className="divide-y divide-gray-200">
-      {_store.games.length == 0 && <GamesListEmpty />}
-      {_store.games.map((x) => (
-        <GameListItem key={x.id} id={x.id} />
-      ))}
-    </ul>
+    <>
+      {_store.currentGame ? <CurrentGame /> : <GameInvitations />}
+      <GameRules />
+    </>
   )
 })
 
-const items = [
-  {
-    description: "The game is played on a grid that's 3 squares by 3 squares.",
-    iconColor: 'bg-blue-500',
-    icon: ViewGridIcon,
-  },
-  {
-    description: 'Players take turns putting their marks (X or O) in empty squares.',
-    iconColor: 'bg-purple-500',
-    icon: ChevronDoubleRightIcon,
-  },
-  {
-    description:
-      'The first player to get 3 of her marks in a row (up, down, across, or diagonally) is the winner.',
-    iconColor: 'bg-green-500',
-    icon: EmojiHappyIcon,
-  },
-  {
-    description:
-      'When all 9 squares are full, the game is over. If no player has 3 marks in a row, the game ends in a tie.',
-    iconColor: 'bg-red-500',
-    icon: BanIcon,
-  },
-]
+const CurrentGame: React.FC = observer(() => {
+  const _store = React.useContext(StoreContext)
+  const { from_id, to_id } = _store.currentGame ?? {}
+  const from = _store.profiles.find((x) => x.id == from_id)
+  const to = _store.profiles.find((x) => x.id == to_id)
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
-const GamesListEmpty: React.FC = () => {
+  const handleCancel = async (e: React.MouseEvent<HTMLElement>) => {}
+
   return (
-    <div className="max-w-lg mx-auto">
-      <div className="text-center">
-        <h2 className="text-lg font-medium text-gray-900">No game available</h2>
-        <p className="mt-1 text-sm text-gray-500">Please invite other to a 1vs1 game.</p>
-      </div>
-      <div className="mt-10">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          The game rules
-        </h3>
-        <ul role="list" className="mt-4 border-t border-b border-gray-200 divide-y divide-gray-200">
-          {items.map((item, itemIdx) => (
-            <li key={itemIdx}>
-              <div className="relative group py-4 flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <span
-                    className={classNames(
-                      item.iconColor,
-                      'inline-flex items-center justify-center h-10 w-10 rounded-lg'
-                    )}
-                  >
-                    <item.icon className="h-6 w-6 text-white" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-500">{item.description}</p>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+    <div className="mt-10 max-w-lg mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-start-3 lg:col-end-6 lg:row-start-1 lg:row-end-4">
+      <div className="relative z-10 rounded-lg shadow-xl">
+        <div
+          className="pointer-events-none absolute inset-0 rounded-lg border-2 border-indigo-600"
+          aria-hidden="true"
+        />
+        <div className="absolute inset-x-0 top-0 transform translate-y-px">
+          <div className="flex justify-center transform -translate-y-1/2">
+            <span className="inline-flex rounded-full bg-indigo-600 px-4 py-1 text-sm font-semibold tracking-wider uppercase text-white">
+              Invitation
+            </span>
+          </div>
+        </div>
+        <div className="bg-white rounded-t-lg px-6 pt-12 pb-10">
+          <div>
+            <p className="relative grid grid-flow-col grid-cols-5">
+              <span className="col-span-2 flex text-center justify-center">
+                <span className="mt-2 text-base font-medium truncate">
+                  {from?.username ?? 'Anonymous'}
+                </span>
+              </span>
+              <span className="flex items-center justify-center font-extrabold text-3xl text-indigo-300">
+                VS
+              </span>
+              <span className="col-span-2 flex text-center justify-center">
+                <span className="mt-2 text-base font-medium truncate">
+                  {to?.username ?? 'Anonymous'}
+                </span>
+              </span>
+            </p>
+          </div>
+        </div>
+        <div className="border-t-2 border-gray-100 rounded-b-lg pt-10 pb-8 px-6 bg-gray-50 sm:px-10 sm:py-10">
+          <div className="w-full inline-flex items-center justify-center">
+            <Loading className="text-blue-500" />
+            <span className="text-gray-400">Waiting reply...</span>
+          </div>
+          <div className="mt-8">
+            <button
+              type="button"
+              className="block w-full px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              onClick={handleCancel}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  )
-}
-
-type GameListItemProps = {
-  id: string
-}
-const GameListItem: React.FC<GameListItemProps> = observer(({ id }) => {
-  const _store = React.useContext(StoreContext)
-  return (
-    <li className="py-4">
-      <div className="block border-2 border-dashed border-gray-300 rounded bg-white h-16 w-full text-gray-200"></div>
-    </li>
   )
 })
