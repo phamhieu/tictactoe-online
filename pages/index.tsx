@@ -46,7 +46,10 @@ const MagicLinkForm: React.FC = () => {
     e.preventDefault()
     try {
       setLoading(true)
-      const { error } = await supabase.auth.signIn({ email })
+      const { error } = await supabase.auth.signIn(
+        { email },
+        { redirectTo: process.env.NEXT_PUBLIC_AUTH_REDIRECT_URL }
+      )
       if (error) throw error
       toast.success('Check your email for the login link!')
     } catch (error) {
